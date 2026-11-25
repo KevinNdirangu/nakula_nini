@@ -415,7 +415,11 @@ app.innerHTML = `
             <label for="custom-meal-ingredients">Ingredients</label>
             <textarea id="custom-meal-ingredients" rows="3"
               placeholder="e.g. Tea leaves, water, sugar, bread" required></textarea>
-            <small>Separate ingredients with commas. You can use ingredients already in My Kitchen or add new ones.</small>
+            <small>Separate ingredient names with commas. You can use ingredients already in My Kitchen or add new ones.</small>
+            <label for="custom-meal-ingredient-details">Quantities and preparation (optional)</label>
+            <textarea id="custom-meal-ingredient-details" rows="4"
+              placeholder="Rice: 2 cups, rinsed&#10;Onions: 1 large, finely chopped&#10;Tomatoes: 2, diced"></textarea>
+            <small>One ingredient per line. Use the ingredient name, a colon, then its quantity and preparation note.</small>
 
             <details class="full-recipe-options">
               <summary>Add preparation instructions (optional)</summary>
@@ -1324,6 +1328,7 @@ customMealForm.addEventListener('submit', event => {
   const name = $('#custom-meal-name').value.trim()
   const category = $('#custom-meal-category').value
   const rawIngredients = $('#custom-meal-ingredients').value
+  const rawIngredientDetails = $('#custom-meal-ingredient-details').value
   const descriptionInput = $('#custom-meal-description').value.trim()
   const timeInput = $('#custom-meal-time').value.trim()
   const instructionsInput = $('#custom-meal-instructions').value.trim()
@@ -1340,6 +1345,24 @@ customMealForm.addEventListener('submit', event => {
     return
   }
 
+  const ingredientDetails = {}
+  const detailLines = rawIngredientDetails.split('\n').map(line => line.trim()).filter(Boolean)
+  for (const line of detailLines) {
+    const separator = line.indexOf(':')
+    if (separator < 1 || separator === line.length - 1) {
+      showToast('For ingredient details, use one line like: Rice: 2 cups, rinsed.')
+      return
+    }
+    const enteredName = normaliseIngredientName(line.slice(0, separator).trim())
+    const ingredient = mealIngredients.find(item => item.toLowerCase() === enteredName.toLowerCase())
+    const detail = line.slice(separator + 1).trim()
+    if (!ingredient) {
+      showToast(`"${line.slice(0, separator).trim()}" is not in your ingredient list. Add it there first.`)
+      return
+    }
+    ingredientDetails[ingredient] = detail
+  }
+
   const instructions = instructionsInput
     .split('\n')
     .map(step => step.trim())
@@ -1354,6 +1377,7 @@ customMealForm.addEventListener('submit', event => {
       : 'A simple meal you have added to your kitchen collection.'),
     emoji: '🍽️',
     ingredients: mealIngredients,
+    ingredientDetails,
     instructions,
     isCustom: true
   }
@@ -1427,6 +1451,8 @@ function editCustomMeal(id) {
   $('#custom-meal-name').value = meal.name
   $('#custom-meal-category').value = meal.category
   $('#custom-meal-ingredients').value = meal.ingredients.join(', ')
+  $('#custom-meal-ingredient-details').value = Object.entries(meal.ingredientDetails || {})
+    .map(([ingredient, detail]) => `${ingredient}: ${detail}`).join('\n')
   $('#custom-meal-description').value = meal.description || ''
   $('#custom-meal-time').value = meal.time || ''
   $('#custom-meal-cost').value = meal.estimatedCost ?? ''
@@ -1496,7 +1522,8 @@ function openRecipe(id) {
     <ul class="recipe-ingredients">
       ${(recipe.ingredients || []).map(item => `
         <li class="${ingredients.has(item) ? 'ingredient-available' : ''}">
-          ${ingredients.has(item) ? '✓' : '○'} ${escapeHTML(item)}
+          <span class="ingredient-name">${ingredients.has(item) ? '✓' : '○'} ${escapeHTML(item)}</span>
+          ${recipe.ingredientDetails && recipe.ingredientDetails[item] ? `<small class="ingredient-detail">${escapeHTML(recipe.ingredientDetails[item])}</small>` : ''}
         </li>
       `).join('')}
     </ul>
