@@ -27,6 +27,8 @@ const customIngredients = Array.isArray(stored.customIngredients)
 const customRecipes = Array.isArray(stored.customRecipes)
   ? stored.customRecipes
   : []
+const recipeEdits = stored.recipeEdits && typeof stored.recipeEdits === 'object' ? stored.recipeEdits : {}
+const deletedRecipeIds = new Set(Array.isArray(stored.deletedRecipeIds) ? stored.deletedRecipeIds : [])
 
 // Meal plans are stored separately for each calendar date.
 // Migrate the previous single-day plan into today's date on first load.
@@ -51,6 +53,8 @@ function saveData() {
     ingredients: [...ingredients],
     customIngredients,
     customRecipes,
+    recipeEdits,
+    deletedRecipeIds: [...deletedRecipeIds],
     mealPlans,
     cookingHistory,
     savedMeals: [...savedMeals],
@@ -276,8 +280,15 @@ const starterRecipes = [
   }
 ]
 
-// Custom recipes are stored separately so starter recipes are never overwritten.
-let recipes = [...starterRecipes, ...customRecipes]
+// Starter recipes remain intact; user edits and deletions are stored separately.
+function refreshRecipes() {
+  recipes = [
+    ...starterRecipes.filter(recipe => !deletedRecipeIds.has(recipe.id)).map(recipe => ({ ...recipe, ...(recipeEdits[recipe.id] || {}) })),
+    ...customRecipes
+  ]
+}
+let recipes = []
+refreshRecipes()
 
 // ==================================================
 // 4. APPLICATION STRUCTURE
@@ -1309,14 +1320,12 @@ function renderRecipes() {
         </small>
         <button class="text-button" type="button" data-action="view"
           data-id="${escapeHTML(recipe.id)}">View meal →</button>
-        ${isCustom ? `
-          <div class="custom-recipe-controls">
-            <button class="text-button" type="button"
-              data-edit-custom="${escapeHTML(recipe.id)}">Edit</button>
-            <button class="text-button danger-text" type="button"
-              data-delete-custom="${escapeHTML(recipe.id)}">Delete</button>
-          </div>
-        ` : ''}
+        <div class="custom-recipe-controls">
+          <button class="text-button" type="button"
+            data-edit-recipe="${escapeHTML(recipe.id)}">Edit</button>
+          <button class="text-button danger-text" type="button"
+            data-delete-recipe="${escapeHTML(recipe.id)}">Delete</button>
+        </div>
       </div>
     `
 
@@ -1438,19 +1447,24 @@ customMealForm.addEventListener('submit', event => {
   })
 
   if (id) {
-    const index = customRecipes.findIndex(recipe => recipe.id === id)
-    if (index === -1) {
-      showToast('That custom meal could not be found.')
-      return
+    const customIndex = customRecipes.findIndex(recipe => recipe.id === id)
+    if (customIndex !== -1) {
+      customRecipes[customIndex] = { ...meal, isCustom: true }
+    } else {
+      const original = starterRecipes.find(recipe => recipe.id === id)
+      if (!original || deletedRecipeIds.has(id)) {
+        showToast('That recipe could not be found.')
+        return
+      }
+      recipeEdits[id] = { ...meal, id, isCustom: false }
     }
-    customRecipes[index] = meal
     showToast(`${name} updated.`)
   } else {
     customRecipes.push(meal)
     showToast(`${name} saved to your recipes.`)
   }
 
-  recipes = [...starterRecipes, ...customRecipes]
+  refreshRecipes()
   saveData()
   resetCustomMealForm()
   renderRecipes()
@@ -1459,16 +1473,16 @@ customMealForm.addEventListener('submit', event => {
 
 recipeList.addEventListener('click', event => {
   const viewButton = event.target.closest('[data-action="view"]')
-  const editButton = event.target.closest('[data-edit-custom]')
-  const deleteButton = event.target.closest('[data-delete-custom]')
+  const editButton = event.target.closest('[data-edit-recipe]')
+  const deleteButton = event.target.closest('[data-delete-recipe]')
 
   if (viewButton) openRecipe(viewButton.dataset.id)
-  if (editButton) editCustomMeal(editButton.dataset.editCustom)
-  if (deleteButton) deleteCustomMeal(deleteButton.dataset.deleteCustom)
+  if (editButton) editRecipe(editButton.dataset.editRecipe)
+  if (deleteButton) deleteRecipe(deleteButton.dataset.deleteRecipe)
 })
 
-function editCustomMeal(id) {
-  const meal = customRecipes.find(recipe => recipe.id === id)
+function editRecipe(id) {
+  const meal = findRecipe(id)
   if (!meal) return
 
   $('#custom-meal-id').value = meal.id
@@ -1491,8 +1505,8 @@ function editCustomMeal(id) {
   customMealForm.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function deleteCustomMeal(id) {
-  const meal = customRecipes.find(recipe => recipe.id === id)
+function deleteRecipe(id) {
+  const meal = findRecipe(id)
   if (!meal) return
 
   if (!window.confirm(`Delete "${meal.name}" from your recipes? This will not erase any cooking-history entries.`)) {
@@ -1500,8 +1514,13 @@ function deleteCustomMeal(id) {
   }
 
   const index = customRecipes.findIndex(recipe => recipe.id === id)
-  customRecipes.splice(index, 1)
-  recipes = [...starterRecipes, ...customRecipes]
+  if (index !== -1) {
+    customRecipes.splice(index, 1)
+  } else {
+    deletedRecipeIds.add(id)
+    delete recipeEdits[id]
+  }
+  refreshRecipes()
 
   Object.values(mealPlans).forEach(dayPlan => {
     Object.keys(dayPlan).forEach(category => {
