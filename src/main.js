@@ -834,8 +834,10 @@ function renderIngredients() {
     button.textContent = selected ? `✓ ${item.name} · Added` : `+ ${item.name}`
     button.setAttribute('aria-pressed', String(selected))
     button.addEventListener('click', () => {
-      if (ingredients.has(item.name)) ingredients.delete(item.name)
-      else ingredients.add(item.name)
+      if (ingredients.has(item.name)) {
+        ingredients.delete(item.name)
+        delete ingredientStock[item.name]
+      } else ingredients.add(item.name)
       saveData()
       renderIngredients()
       renderKitchenDiscovery()
@@ -916,6 +918,7 @@ $('#kitchen-inventory').addEventListener('click', event => {
   if (!button) return
   const name = button.dataset.removeIngredient
   ingredients.delete(name)
+  delete ingredientStock[name]
   saveData()
   renderIngredients()
   renderDailyMeals()
@@ -997,15 +1000,15 @@ ingredientForm.addEventListener('submit', event => {
 function parseQuantityDetail(detail) {
   if (!detail) return null
   const source = String(detail).toLowerCase().replace(/,/g, ' ').trim()
-  const match = source.match(/^(?:about\\s+|approximately\\s+|~\\s*)?([0-9]+(?:\\.[0-9]+)?|[½¼¾⅓⅔⅛])(?:\\s*[-–to]+\\s*([0-9]+(?:\\.[0-9]+)?|[½¼¾⅓⅔⅛]))?\\s*(.*)$/i)
+  const match = source.match(/^(?:about\s+|approximately\s+|~\s*)?([0-9]+(?:\.[0-9]+)?|[½¼¾⅓⅔⅛])(?:\s*[-–to]+\s*([0-9]+(?:\.[0-9]+)?|[½¼¾⅓⅔⅛]))?\s*(.*)$/i)
   if (!match) return null
   const fractions = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1/3, '⅔': 2/3, '⅛': 0.125 }
   const number = value => fractions[value] ?? Number(value)
   const low = number(match[1])
   const high = match[2] ? number(match[2]) : low
   if (!Number.isFinite(low) || !Number.isFinite(high)) return null
-  const suffix = match[3].trim().replace(/\\s+/g, ' ')
-  const unitMatch = suffix.match(/^(cups?|teaspoons?|tablespoons?|ml|litres?|liters?|g|kg|bunch(?:es)?|medium|small|large)\\b/i)
+  const suffix = match[3].trim().replace(/\s+/g, ' ')
+  const unitMatch = suffix.match(/^(cups?|teaspoons?|tablespoons?|ml|litres?|liters?|g|kg|bunch(?:es)?|medium|small|large)\b/i)
   return { low, high, unit: (unitMatch ? unitMatch[1] : suffix.split(' ')[0] || '').toLowerCase() }
 }
 
