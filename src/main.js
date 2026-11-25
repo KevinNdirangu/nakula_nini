@@ -1004,7 +1004,9 @@ function parseQuantityDetail(detail) {
   const low = number(match[1])
   const high = match[2] ? number(match[2]) : low
   if (!Number.isFinite(low) || !Number.isFinite(high)) return null
-  return { low, high, unit: match[3].trim().replace(/\\s+/g, ' ') }
+  const suffix = match[3].trim().replace(/\\s+/g, ' ')
+  const unitMatch = suffix.match(/^(cups?|teaspoons?|tablespoons?|ml|litres?|liters?|g|kg|bunch(?:es)?|medium|small|large)\\b/i)
+  return { low, high, unit: (unitMatch ? unitMatch[1] : suffix.split(' ')[0] || '').toLowerCase() }
 }
 
 function formatScaledQuantity(detail, servings, baseServings = 2) {
