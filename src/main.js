@@ -341,30 +341,39 @@ app.innerHTML = `
 
         <section class="kitchen-section">
           <div class="section-heading">
-            <div>
-              <p class="eyebrow">YOUR INGREDIENTS</p>
-              <h2>What's available?</h2>
+            <div><p class="eyebrow">YOUR INGREDIENTS</p><h2>What's in the kitchen?</h2></div>
+            <span class="ingredient-count" id="ingredient-count">0 ingredients</span>
+          </div>
+          <p class="section-description">This is your current kitchen inventory. It stays here until you remove something.</p>
+          <div class="kitchen-inventory" id="kitchen-inventory"></div>
+          <button class="small-primary-button add-kitchen-ingredients" type="button" id="open-ingredient-picker">+ Add ingredients</button>
+
+          <div class="ingredient-picker" id="ingredient-picker" hidden>
+            <div class="picker-heading">
+              <div><strong>Add to your kitchen</strong><p>Search the catalogue or add your own ingredient.</p></div>
+              <button class="picker-close" type="button" id="close-ingredient-picker" aria-label="Close ingredient picker">×</button>
             </div>
-            <span class="ingredient-count" id="ingredient-count">0 selected</span>
+            <form class="add-ingredient-form" id="ingredient-form">
+              <input id="ingredient-input" type="text" placeholder="Search or add an ingredient..." aria-label="Search or add an ingredient" maxlength="35" autocomplete="off">
+              <button type="submit" aria-label="Add ingredient">+</button>
+            </form>
+            <p class="suggestion-hint" id="search-hint">Browse the catalogue or search by name.</p>
+            <div class="ingredient-list" id="ingredient-list"></div>
           </div>
-          <p class="section-description">
-            Tap an ingredient to add it or remove it from your kitchen.
-          </p>
-          <form class="add-ingredient-form" id="ingredient-form">
-            <input id="ingredient-input" type="text"
-              placeholder="Search or add an ingredient..."
-              aria-label="Search or add an ingredient"
-              maxlength="35" autocomplete="off">
-            <button type="submit" aria-label="Add ingredient">+</button>
-          </form>
-          <p class="suggestion-hint" id="search-hint">
-            Browse the catalogue or search by name.
-          </p>
-          <div class="ingredient-list" id="ingredient-list"></div>
-          <div class="selected-summary">
-            <strong>In my kitchen:</strong>
-            <p id="selected-summary">No ingredients selected yet.</p>
-          </div>
+        </section>
+
+        <section class="kitchen-discovery">
+          <div class="section-heading"><div><p class="eyebrow">MATHE'S IDEAS</p><h2>Meals you could make</h2></div></div>
+          <p class="section-description">Suggestions are based on the ingredients you currently have.</p>
+          <div id="kitchen-suggestions" class="kitchen-meal-list"></div>
+          <button class="secondary-button" type="button" data-go="Recipes">Explore all recipes →</button>
+        </section>
+
+        <section class="kitchen-discovery">
+          <div class="section-heading"><div><p class="eyebrow">MADE BEFORE</p><h2>Cook it again</h2></div></div>
+          <p class="section-description">Pick a meal from your cooking history and make it again.</p>
+          <div id="kitchen-history" class="kitchen-meal-list"></div>
+          <button class="secondary-button" type="button" data-go="Recipes">Create a new meal →</button>
         </section>
       </section>
 
@@ -728,44 +737,48 @@ function findSimilarIngredient(value) {
 // ==================================================
 
 function renderIngredients() {
+  const inventory = $('#kitchen-inventory')
+  const picker = $('#ingredient-picker')
+  inventory.replaceChildren()
   ingredientList.replaceChildren()
-  const search = ingredientInput.value.trim().toLowerCase()
 
+  const selectedItems = [...ingredients]
+  ingredientCount.textContent = `${selectedItems.length} ingredient${selectedItems.length === 1 ? '' : 's'}`
+
+  if (!selectedItems.length) {
+    inventory.innerHTML = '<p class="empty-state">Your kitchen is empty for now. Add the ingredients you have at home and Mathe will suggest meals.</p>'
+  } else {
+    selectedItems.forEach(name => {
+      const chip = document.createElement('div')
+      chip.className = 'inventory-chip'
+      chip.innerHTML = `<span>${escapeHTML(name)}</span><button type="button" aria-label="Remove ${escapeHTML(name)}" data-remove-ingredient="${escapeHTML(name)}">×</button>`
+      inventory.appendChild(chip)
+    })
+  }
+
+  const search = ingredientInput.value.trim().toLowerCase()
   const visible = ingredientCatalogue.filter(item =>
     [item.name, ...item.aliases].some(name => name.toLowerCase().includes(search))
   )
-
   visible.forEach(item => {
     const selected = ingredients.has(item.name)
     const button = document.createElement('button')
     button.type = 'button'
     button.className = selected ? 'ingredient-chip selected' : 'ingredient-chip'
-    button.textContent = selected ? `✓ ${item.name}` : `+ ${item.name}`
+    button.textContent = selected ? `✓ ${item.name} · Added` : `+ ${item.name}`
     button.setAttribute('aria-pressed', String(selected))
-
     button.addEventListener('click', () => {
-      if (ingredients.has(item.name)) {
-        ingredients.delete(item.name)
-        showToast(`${item.name} removed from your kitchen.`)
-      } else {
-        ingredients.add(item.name)
-        showToast(`${item.name} added to your kitchen.`)
-      }
-
+      if (ingredients.has(item.name)) ingredients.delete(item.name)
+      else ingredients.add(item.name)
       saveData()
       renderIngredients()
+      renderKitchenDiscovery()
       renderDailyMeals()
       renderRecipes()
-      renderShoppingList()
+      showToast(ingredients.has(item.name) ? `${item.name} added.` : `${item.name} removed.`)
     })
-
     ingredientList.appendChild(button)
   })
-
-  ingredientCount.textContent = `${ingredients.size} selected`
-  selectedSummary.textContent = ingredients.size
-    ? [...ingredients].join(', ')
-    : 'No ingredients selected yet.'
 
   if (!visible.length) {
     const message = document.createElement('p')
@@ -773,7 +786,90 @@ function renderIngredients() {
     message.textContent = 'No matching ingredients found. You can add it above.'
     ingredientList.appendChild(message)
   }
+
+  renderKitchenDiscovery()
 }
+
+function renderKitchenDiscovery() {
+  const suggestions = $('#kitchen-suggestions')
+  const pastMeals = $('#kitchen-history')
+  if (!suggestions || !pastMeals) return
+
+  const ranked = recipes
+    .map(recipe => ({ recipe, match: getMealMatch(recipe) }))
+    .sort((a, b) => b.match.score - a.match.score || b.match.matched.length - a.match.matched.length)
+    .slice(0, 4)
+
+  suggestions.replaceChildren()
+  if (!ranked.length) {
+    suggestions.innerHTML = '<p class="empty-state">Add meals in Recipes and Mathe will suggest what to cook.</p>'
+  } else {
+    ranked.forEach(({ recipe, match }) => {
+      const item = document.createElement('article')
+      item.className = 'kitchen-meal-card'
+      item.innerHTML = `
+        <span class="kitchen-meal-emoji">${escapeHTML(recipe.emoji || '🍽️')}</span>
+        <div class="kitchen-meal-info"><strong>${escapeHTML(recipe.name)}</strong><small>${match.matched.length} of ${(recipe.ingredients || []).length} ingredients available</small></div>
+        <button class="text-button" type="button" data-kitchen-view="${escapeHTML(recipe.id)}">View</button>`
+      suggestions.appendChild(item)
+    })
+  }
+
+  pastMeals.replaceChildren()
+  const recent = cookingHistory.slice(0, 5)
+  if (!recent.length) {
+    pastMeals.innerHTML = '<p class="empty-state">Your cooked meals will appear here. Once you have cooked something, you can quickly choose it again.</p>'
+  } else {
+    recent.forEach(record => {
+      const item = document.createElement('article')
+      item.className = 'kitchen-meal-card'
+      item.innerHTML = `
+        <span class="kitchen-meal-emoji">🍲</span>
+        <div class="kitchen-meal-info"><strong>${escapeHTML(record.name)}</strong><small>Last cooked: ${formatDate(dateFromKey(recordDateKey(record)))}</small></div>
+        <button class="text-button" type="button" data-cook-again="${escapeHTML(record.id)}" data-category="${escapeHTML(record.category)}">Cook again</button>`
+      pastMeals.appendChild(item)
+    })
+  }
+}
+
+$('#kitchen-inventory').addEventListener('click', event => {
+  const button = event.target.closest('[data-remove-ingredient]')
+  if (!button) return
+  const name = button.dataset.removeIngredient
+  ingredients.delete(name)
+  saveData()
+  renderIngredients()
+  renderDailyMeals()
+  renderRecipes()
+  showToast(`${name} removed from your kitchen.`)
+})
+
+$('#open-ingredient-picker').addEventListener('click', () => {
+  $('#ingredient-picker').hidden = false
+  ingredientInput.focus()
+})
+$('#close-ingredient-picker').addEventListener('click', () => {
+  $('#ingredient-picker').hidden = true
+  ingredientInput.value = ''
+  searchHint.textContent = 'Browse the catalogue or search by name.'
+  renderIngredients()
+})
+
+$('#kitchen-suggestions').addEventListener('click', event => {
+  const button = event.target.closest('[data-kitchen-view]')
+  if (button) openRecipe(button.dataset.kitchenView)
+})
+$('#kitchen-history').addEventListener('click', event => {
+  const button = event.target.closest('[data-cook-again]')
+  if (!button) return
+  const recipe = findRecipe(button.dataset.cookAgain)
+  if (!recipe) {
+    showToast('This meal is no longer in your recipe collection.')
+    return
+  }
+  recordMeal(recipe.id, button.dataset.category)
+  renderKitchenDiscovery()
+})
 
 ingredientInput.addEventListener('input', () => {
   renderIngredients()
@@ -786,9 +882,7 @@ ingredientForm.addEventListener('submit', event => {
   event.preventDefault()
   const value = normaliseIngredientName(ingredientInput.value)
   if (!value) return
-
   const exact = findExactIngredient(value)
-
   if (exact) {
     if (ingredients.has(exact.name)) {
       showToast(`${exact.name} is already in your kitchen.`)
@@ -796,39 +890,26 @@ ingredientForm.addEventListener('submit', event => {
       ingredients.add(exact.name)
       showToast(`${exact.name} added to your kitchen.`)
     }
-
-    ingredientInput.value = ''
-    saveData()
-    renderIngredients()
-    renderDailyMeals()
-    renderRecipes()
-    renderShoppingList()
-    return
+  } else {
+    const similar = findSimilarIngredient(value)
+    if (similar && window.confirm(`Did you mean "${similar.name}" instead of "${value}"?`)) {
+      ingredients.add(similar.name)
+      showToast(`${similar.name} added to your kitchen.`)
+    } else if (!similar) {
+      const newName = addIngredientToCatalogue(value)
+      if (newName) {
+        ingredients.add(newName)
+        showToast(`${newName} added to your kitchen.`)
+      }
+    } else {
+      return
+    }
   }
-
-  const similar = findSimilarIngredient(value)
-
-  if (similar && window.confirm(`Did you mean "${similar.name}" instead of "${value}"?`)) {
-    ingredients.add(similar.name)
-    ingredientInput.value = ''
-    saveData()
-    renderIngredients()
-    renderDailyMeals()
-    renderRecipes()
-    showToast(`${similar.name} added to your kitchen.`)
-    return
-  }
-
-  const newName = addIngredientToCatalogue(value)
-  if (!newName) return
-
-  ingredients.add(newName)
   ingredientInput.value = ''
   saveData()
   renderIngredients()
   renderDailyMeals()
   renderRecipes()
-  showToast(`${newName} added to your kitchen.`)
 })
 
 // ==================================================
@@ -1408,6 +1489,9 @@ function renderHistory() {
       historyList.appendChild(item)
     })
   }
+
+
+  renderKitchenDiscovery()
 }
 
 savedList.addEventListener('click', event => {
