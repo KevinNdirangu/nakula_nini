@@ -1918,9 +1918,57 @@ $('#shopping-list').addEventListener('change', event => {
 $('#refresh-shopping').addEventListener('click', renderShoppingList)
 
 // ==================================================
-// 17. INITIAL DISPLAY
+// 17. MATHE'S ROTATING WORDS
 // ==================================================
 
+function showMatheMessage() {
+  const messages = [
+    "Mtoto wangu, kwanza tuangalie kwa kitchen kuna nini.",
+    "Usijali, tutatafuta kitu kitamu kutoka kwa vile tulivyo navyo.",
+    "Polepole mtoto wangu, chakula kizuri huanza na mpango mzuri.",
+    "Leo hatutupi chakula. Tutatumia akili na kile kiko kwa nyumba.",
+    "Hata ingredients chache zinaweza kuleta supper tamu. Ngoja tuone!",
+    "Karibu jikoni! Tuanze na kile unacho, mengine tutajipanga.",
+    "Kila siku ni nafasi ya kupika kitu tofauti. Leo tunajaribu nini?",
+    "Usikimbilie kununua vitu, mtoto wangu. Kwanza check what is already there.",
+    "Chakula cha nyumbani kina mapenzi ndani yake. Sasa tuanze kupanga.",
+    "Hakuna stress ya leo. Mathe ako hapa tukueke sawa.",
+    "Tukipanga vizuri, hata budget ndogo inaweza kula vizuri.",
+    "Siri ya kupika vizuri? Kujua ulicho nacho na kukitumia vizuri.",
+    "Acha nikuulize, leo una beans, rice ama viazi? Tunaweza fanya magic!",
+    "Kwanza tuangalie ingredients, halafu tuchague meal itakayofurahisha wote.",
+    "Mtoto wangu, usidharau leftovers. Kesho zinaweza kuwa meal mpya kabisa."
+  ]
+
+  const messageElement = document.querySelector(".mathe-message p")
+  if (!messageElement) return
+
+  let previousIndex = -1
+  try {
+    previousIndex = Number(localStorage.getItem("kwaMatheLastMessage"))
+  } catch (error) {
+    previousIndex = -1
+  }
+
+  let nextIndex = Math.floor(Math.random() * messages.length)
+  if (messages.length > 1 && nextIndex === previousIndex) {
+    nextIndex = (nextIndex + 1 + Math.floor(Math.random() * (messages.length - 1))) % messages.length
+  }
+
+  messageElement.textContent = "“" + messages[nextIndex] + "”"
+
+  try {
+    localStorage.setItem("kwaMatheLastMessage", String(nextIndex))
+  } catch (error) {
+    // The message still works when browser storage is unavailable.
+  }
+}
+
+// ==================================================
+// 18. INITIAL DISPLAY
+// ==================================================
+
+showMatheMessage()
 renderDateTracker()
 renderDailyMeals()
 renderIngredients()
