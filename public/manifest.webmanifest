@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Kwa Mathe",
+  "short_name": "Kwa Mathe",
+  "description": "Your friendly Kenyan kitchen companion.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F7EBDD",
+  "theme_color": "#244B38",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
