@@ -844,3 +844,75 @@ main { display: block; }
 @media (max-width: 380px) {
   .home-shortcuts { grid-template-columns: 1fr; }
 }
+
+
+/* MY KITCHEN — persistent inventory and meal discovery */
+.kitchen-section, .kitchen-discovery {
+  margin: 20px 0 28px;
+  padding: 19px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.kitchen-inventory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 15px 0;
+}
+.inventory-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+.inventory-chip button, .picker-close {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1;
+}
+.add-kitchen-ingredients { margin-top: 5px; }
+.ingredient-picker {
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+.picker-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.picker-heading strong { color: var(--green); font-size: 14px; }
+.picker-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.kitchen-meal-list { display: grid; gap: 9px; margin: 14px 0; }
+.kitchen-meal-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+.kitchen-meal-emoji { font-size: 25px; }
+.kitchen-meal-info { display: grid; flex: 1; min-width: 0; gap: 4px; }
+.kitchen-meal-info strong { color: var(--text); font-size: 13px; }
+.kitchen-meal-info small { color: var(--muted); font-size: 10px; }
+.kitchen-meal-card .text-button { flex-shrink: 0; }
+@media (max-width: 420px) {
+  .kitchen-section, .kitchen-discovery { padding: 14px; }
+  .kitchen-meal-card { gap: 7px; padding: 10px; }
+  .kitchen-meal-card .text-button { font-size: 10px; }
+}
