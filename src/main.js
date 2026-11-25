@@ -1608,7 +1608,7 @@ function openRecipe(id) {
         progress.setAttribute('aria-valuenow', String(steps.length))
         progressFill.style.width = '100%'
         progressLabel.textContent = '100% complete'
-        stepPanel.innerHTML = '<span class="cooking-step-kicker">ALL DONE</span><p>You've reached the end of the preparation guide.</p>'
+        stepPanel.innerHTML = '<span class="cooking-step-kicker">ALL DONE</span><p>You&#39;ve reached the end of the preparation guide.</p>'
         finishNote.hidden = false
         previousButton.disabled = false
         nextButton.textContent = 'Start again ↺'
