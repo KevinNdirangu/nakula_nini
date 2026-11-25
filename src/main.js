@@ -1009,7 +1009,9 @@ function parseQuantityDetail(detail) {
   if (!Number.isFinite(low) || !Number.isFinite(high)) return null
   const suffix = match[3].trim().replace(/\s+/g, ' ')
   const unitMatch = suffix.match(/^(cups?|teaspoons?|tablespoons?|ml|litres?|liters?|g|kg|bunch(?:es)?|medium|small|large)\b/i)
-  return { low, high, unit: (unitMatch ? unitMatch[1] : suffix.split(' ')[0] || '').toLowerCase() }
+  const rawUnit = (unitMatch ? unitMatch[1] : suffix.split(' ')[0] || '').toLowerCase()
+  const unit = ({ cups: 'cup', teaspoons: 'teaspoon', tablespoons: 'tablespoon', bunches: 'bunch', litres: 'litre', liters: 'liter' })[rawUnit] || rawUnit
+  return { low, high, unit }
 }
 
 function formatScaledQuantity(detail, servings, baseServings = 2) {
