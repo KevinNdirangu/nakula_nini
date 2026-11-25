@@ -533,6 +533,8 @@ app.innerHTML = `
       <button class="nav-item" type="button" data-page="Saved"><span>♡</span><small>Saved</small></button>
     </nav>
 
+    <div hidden aria-hidden="true"><div id="shopping-list"></div><button id="refresh-shopping" type="button"></button></div>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <div class="modal-backdrop" id="recipe-modal" hidden>
