@@ -957,3 +957,164 @@ main { display: block; }
     flex: 1 1 auto;
   }
 }
+
+
+/* MONTHLY MEAL CALENDAR */
+.day-tracker {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.calendar-month-title { display: grid; gap: 4px; }
+.calendar-month-title .eyebrow { margin: 0; }
+.calendar-month-title strong {
+  color: var(--green);
+  font-family: Georgia, serif;
+  font-size: clamp(21px, 4vw, 27px);
+  line-height: 1.15;
+}
+.calendar-navigation { display: flex; align-items: center; gap: 7px; }
+.week-arrow, .today-button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 700;
+}
+.today-button {
+  min-width: 0;
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  font-size: 11px;
+}
+.month-calendar { overflow: hidden; }
+.calendar-weekdays, .week-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.calendar-weekdays {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.calendar-weekdays span {
+  color: var(--muted);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+.week-days { gap: 5px; padding-top: 8px; }
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  min-height: 57px;
+  padding: 8px 2px 5px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.week-day:hover { background: var(--surface-soft); }
+.week-day .calendar-date-number {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 650;
+}
+.week-day.outside-month { opacity: .32; }
+.week-day.is-today .calendar-date-number {
+  outline: 1.5px solid var(--orange);
+  outline-offset: 2px;
+}
+.week-day.selected {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.week-day.selected .calendar-date-number {
+  background: var(--green);
+  color: white;
+}
+.day-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 5px;
+}
+.day-dots i, .calendar-legend i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.planned-dot { background: var(--orange); }
+.cooked-dot { background: #4B9B70; }
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.calendar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.selected-day-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 19px;
+  padding-top: 17px;
+  border-top: 1px solid var(--border);
+}
+.selected-day-heading .eyebrow { margin-bottom: 4px; }
+.selected-day-heading h3 {
+  margin: 0;
+  color: var(--green);
+  font-family: Georgia, serif;
+  font-size: 19px;
+}
+.day-progress {
+  padding: 7px 10px;
+  border-radius: 20px;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .day-tracker { padding: 14px 10px; border-radius: 16px; }
+  .calendar-toolbar { align-items: flex-end; gap: 8px; margin-bottom: 14px; }
+  .calendar-navigation { gap: 5px; }
+  .week-arrow { min-width: 34px; width: 34px; height: 35px; padding: 0; }
+  .today-button { height: 35px; padding: 0 8px; }
+  .week-days { gap: 2px; padding-top: 7px; }
+  .week-day { min-height: 49px; gap: 5px; padding: 6px 0 4px; border-radius: 9px; }
+  .week-day .calendar-date-number { width: 25px; height: 25px; font-size: 11px; }
+  .calendar-weekdays span { font-size: 9px; }
+  .selected-day-heading h3 { font-size: 16px; }
+}
