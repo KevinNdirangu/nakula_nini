@@ -826,7 +826,7 @@ function renderKitchenDiscovery() {
       item.innerHTML = `
         <span class="kitchen-meal-emoji">🍲</span>
         <div class="kitchen-meal-info"><strong>${escapeHTML(record.name)}</strong><small>Last cooked: ${formatDate(dateFromKey(recordDateKey(record)))}</small></div>
-        <button class="text-button" type="button" data-cook-again="${escapeHTML(record.id)}" data-category="${escapeHTML(record.category)}">Cook again</button>`
+        <button class="text-button" type="button" data-cook-again="${escapeHTML(record.id)}">View & cook</button>`
       pastMeals.appendChild(item)
     })
   }
@@ -867,8 +867,7 @@ $('#kitchen-history').addEventListener('click', event => {
     showToast('This meal is no longer in your recipe collection.')
     return
   }
-  recordMeal(recipe.id, button.dataset.category)
-  renderKitchenDiscovery()
+  openRecipe(recipe.id)
 })
 
 ingredientInput.addEventListener('input', () => {
