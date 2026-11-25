@@ -452,13 +452,27 @@ app.innerHTML = `
           </form>
         </section>
 
-        <div class="section-heading recipe-heading">
-          <div>
-            <p class="eyebrow">MATHE'S COLLECTION</p>
-            <h2>All meals</h2>
+        <section class="recipe-library-section">
+          <div class="section-heading recipe-heading">
+            <div>
+              <p class="eyebrow">MATHE'S COLLECTION</p>
+              <h2>Explore meals</h2>
+            </div>
+            <span class="ingredient-count" id="recipe-count">0 meals</span>
           </div>
-        </div>
-        <div id="recipe-list" class="recipe-list"></div>
+          <label class="recipe-search-label" for="recipe-search">Find something to cook</label>
+          <input id="recipe-search" class="recipe-search" type="search"
+            placeholder="Search meals or ingredients..." autocomplete="off">
+          <div class="recipe-filters" role="group" aria-label="Filter recipes by meal time">
+            <button type="button" class="recipe-filter active" data-recipe-filter="All" aria-pressed="true">All</button>
+            <button type="button" class="recipe-filter" data-recipe-filter="Breakfast" aria-pressed="false">Breakfast</button>
+            <button type="button" class="recipe-filter" data-recipe-filter="Lunch" aria-pressed="false">Lunch</button>
+            <button type="button" class="recipe-filter" data-recipe-filter="Supper" aria-pressed="false">Supper</button>
+            <button type="button" class="recipe-filter" data-recipe-filter="My meals" aria-pressed="false">My meals</button>
+          </div>
+          <p class="recipe-results-note" id="recipe-results-note" aria-live="polite"></p>
+          <div id="recipe-list" class="recipe-list"></div>
+        </section>
       </section>
 
       <section class="page" id="page-planner" hidden>
@@ -586,6 +600,8 @@ const toast = $('#toast')
 const modal = $('#recipe-modal')
 const modalContent = $('#modal-content')
 const customMealForm = $('#custom-meal-form')
+let activeRecipeCategory = 'All'
+let recipeSearchTerm = ''
 
 // ==================================================
 // 6. HELPERS
@@ -1211,13 +1227,45 @@ function resetCustomMealForm() {
 
 function renderRecipes() {
   recipeList.innerHTML = ''
+  const query = recipeSearchTerm.trim().toLowerCase()
+  const filteredRecipes = recipes.filter(recipe => {
+    const categoryMatch = activeRecipeCategory === 'All'
+      || (activeRecipeCategory === 'My meals' ? Boolean(recipe.isCustom) : recipe.category === activeRecipeCategory)
+    const searchableText = [recipe.name, recipe.description, recipe.category, ...(recipe.ingredients || [])]
+      .join(' ').toLowerCase()
+    return categoryMatch && (!query || searchableText.includes(query))
+  })
 
-  recipes.forEach(recipe => {
+  $('#recipe-count').textContent = `${filteredRecipes.length} ${filteredRecipes.length === 1 ? 'meal' : 'meals'}`
+  $('#recipe-results-note').textContent = query || activeRecipeCategory !== 'All'
+    ? `Showing ${filteredRecipes.length} of ${recipes.length} meals`
+    : `${recipes.length} meals in Mathe's collection`
+
+  document.querySelectorAll('[data-recipe-filter]').forEach(button => {
+    const selected = button.dataset.recipeFilter === activeRecipeCategory
+    button.classList.toggle('active', selected)
+    button.setAttribute('aria-pressed', String(selected))
+  })
+
+  if (!filteredRecipes.length) {
+    recipeList.innerHTML = `<div class="empty-state recipe-empty-state">
+      <strong>No meals found.</strong><br>
+      Try another search or choose a different meal-time filter.
+      <button type="button" class="text-button" data-clear-recipe-filters>Clear filters</button>
+    </div>`
+    return
+  }
+
+  filteredRecipes.forEach(recipe => {
     const card = document.createElement('article')
     card.className = 'recipe-list-card'
 
     const match = getMealMatch(recipe)
     const isCustom = Boolean(recipe.isCustom)
+    const ingredientTotal = (recipe.ingredients || []).length
+    const availability = ingredientTotal && match.matched.length === ingredientTotal
+      ? 'You have everything'
+      : `${match.matched.length} of ${ingredientTotal} ingredients available`
 
     card.innerHTML = `
       <div class="recipe-emoji">${escapeHTML(recipe.emoji || '🍽️')}</div>
@@ -1227,7 +1275,7 @@ function renderRecipes() {
         <p>${escapeHTML(recipe.description || 'A meal from your kitchen.')}</p>
         <small>
           ${recipe.time ? `${Number(recipe.time)} min · ` : ''}
-          ${match.matched.length} of ${(recipe.ingredients || []).length} ingredients available
+          ${availability}
           ${recipe.estimatedCost != null ? ` · Approx. KSh ${Number(recipe.estimatedCost).toLocaleString('en-KE')}` : ''}
           ${!(recipe.instructions || []).length ? ' · Quick meal' : ''}
         </small>
@@ -1247,6 +1295,27 @@ function renderRecipes() {
     recipeList.appendChild(card)
   })
 }
+
+$('#recipe-search').addEventListener('input', event => {
+  recipeSearchTerm = event.target.value
+  renderRecipes()
+})
+
+document.querySelector('.recipe-filters').addEventListener('click', event => {
+  const button = event.target.closest('[data-recipe-filter]')
+  if (!button) return
+  activeRecipeCategory = button.dataset.recipeFilter
+  renderRecipes()
+})
+
+recipeList.addEventListener('click', event => {
+  if (event.target.closest('[data-clear-recipe-filters]')) {
+    activeRecipeCategory = 'All'
+    recipeSearchTerm = ''
+    $('#recipe-search').value = ''
+    renderRecipes()
+  }
+})
 
 customMealForm.addEventListener('submit', event => {
   event.preventDefault()
