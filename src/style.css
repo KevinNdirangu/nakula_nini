@@ -815,3 +815,32 @@ main { display: block; }
 @media (prefers-color-scheme: dark) {
   .shopping-budget.over-budget { background: #4A302A; color: #F1B29C; }
 }
+
+
+/* HOME SHORTCUTS */
+.home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.shortcut-card {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+  min-height: 118px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+.shortcut-card > span { font-size: 25px; }
+.shortcut-card strong { color: var(--green); font-size: 13px; }
+.shortcut-card small { color: var(--muted); font-size: 11px; }
+.shortcut-card:hover { border-color: var(--gold); transform: translateY(-1px); }
+@media (max-width: 380px) {
+  .home-shortcuts { grid-template-columns: 1fr; }
+}
