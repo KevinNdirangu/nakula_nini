@@ -916,3 +916,44 @@ main { display: block; }
   .kitchen-meal-card { gap: 7px; padding: 10px; }
   .kitchen-meal-card .text-button { font-size: 10px; }
 }
+
+
+/* PLANNER MEAL CHOOSER */
+.plan-meal-picker {
+  display: grid;
+  gap: 7px;
+  max-width: 420px;
+  margin: 13px 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 750;
+}
+.plan-meal-picker select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.plan-meal-picker select:focus {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+.daily-meal-card .meal-actions {
+  align-items: center;
+}
+.daily-meal-card .danger-text {
+  padding: 7px 2px;
+}
+@media (max-width: 520px) {
+  .daily-meal-card .meal-actions {
+    align-items: stretch;
+  }
+  .daily-meal-card .meal-actions > button {
+    flex: 1 1 auto;
+  }
+}
