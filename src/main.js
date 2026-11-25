@@ -19,6 +19,7 @@ const stored = loadData()
 const ingredients = new Set(
   stored.ingredients || ['Potatoes', 'Tomatoes', 'Onions', 'Eggs']
 )
+const ingredientStock = stored.ingredientStock && typeof stored.ingredientStock === 'object' ? stored.ingredientStock : {}
 
 const customIngredients = Array.isArray(stored.customIngredients)
   ? stored.customIngredients
@@ -51,6 +52,7 @@ const mealServings = stored.mealServings && typeof stored.mealServings === 'obje
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     ingredients: [...ingredients],
+    ingredientStock,
     customIngredients,
     customRecipes,
     recipeEdits,
@@ -815,7 +817,7 @@ function renderIngredients() {
     selectedItems.forEach(name => {
       const chip = document.createElement('div')
       chip.className = 'inventory-chip'
-      chip.innerHTML = `<span>${escapeHTML(name)}</span><button type="button" aria-label="Remove ${escapeHTML(name)}" data-remove-ingredient="${escapeHTML(name)}">×</button>`
+      chip.innerHTML = `<span class="inventory-chip-name">${escapeHTML(name)}</span><label class="inventory-quantity-label"><span>Have</span><input type="text" inputmode="decimal" maxlength="30" placeholder="Add amount" aria-label="Amount of ${escapeHTML(name)} available" data-stock-name="${escapeHTML(name)}" value="${escapeHTML(ingredientStock[name] || '')}"></label><button type="button" aria-label="Remove ${escapeHTML(name)}" data-remove-ingredient="${escapeHTML(name)}">×</button>`
       inventory.appendChild(chip)
     })
   }
@@ -895,6 +897,19 @@ function renderKitchenDiscovery() {
     })
   }
 }
+
+$('#kitchen-inventory').addEventListener('change', event => {
+  const input = event.target.closest('[data-stock-name]')
+  if (!input) return
+  const name = input.dataset.stockName
+  const value = input.value.trim()
+  if (value) ingredientStock[name] = value
+  else delete ingredientStock[name]
+  saveData()
+  renderDailyMeals()
+  renderKitchenDiscovery()
+  showToast(value ? `${name} quantity saved.` : `${name} quantity cleared.`)
+})
 
 $('#kitchen-inventory').addEventListener('click', event => {
   const button = event.target.closest('[data-remove-ingredient]')
@@ -978,6 +993,48 @@ ingredientForm.addEventListener('submit', event => {
 // ==================================================
 // 9. MEAL MATCHING
 // ==================================================
+
+function parseQuantityDetail(detail) {
+  if (!detail) return null
+  const source = String(detail).toLowerCase().replace(/,/g, ' ').trim()
+  const match = source.match(/^(?:about\\s+|approximately\\s+|~\\s*)?([0-9]+(?:\\.[0-9]+)?|[½¼¾⅓⅔⅛])(?:\\s*[-–to]+\\s*([0-9]+(?:\\.[0-9]+)?|[½¼¾⅓⅔⅛]))?\\s*(.*)$/i)
+  if (!match) return null
+  const fractions = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1/3, '⅔': 2/3, '⅛': 0.125 }
+  const number = value => fractions[value] ?? Number(value)
+  const low = number(match[1])
+  const high = match[2] ? number(match[2]) : low
+  if (!Number.isFinite(low) || !Number.isFinite(high)) return null
+  return { low, high, unit: match[3].trim().replace(/\\s+/g, ' ') }
+}
+
+function formatScaledQuantity(detail, servings, baseServings = 2) {
+  if (!detail) return 'Quantity not specified'
+  const parsed = parseQuantityDetail(detail)
+  if (!parsed || !Number.isFinite(Number(baseServings)) || Number(baseServings) <= 0) return servings === Number(baseServings || 2) ? String(detail) : `${detail} (adjust to ${servings} servings)`
+  const factor = servings / Number(baseServings)
+  const format = value => Number((value * factor).toFixed(2)).toString()
+  const amount = parsed.low === parsed.high ? format(parsed.low) : `${format(parsed.low)}–${format(parsed.high)}`
+  return `${amount}${parsed.unit ? ` ${parsed.unit}` : ''}`
+}
+
+function compareStockWithRequirement(requiredText, availableText) {
+  if (!availableText) return { status: 'not-entered', text: 'Amount not entered' }
+  const required = parseQuantityDetail(requiredText)
+  const available = parseQuantityDetail(availableText)
+  if (!required || !available || required.unit !== available.unit) return { status: 'recorded', text: `In kitchen: ${availableText}` }
+  if (available.high >= required.high) return { status: 'enough', text: `Have ${availableText} · enough` }
+  const shortage = Math.max(0, required.high - available.high)
+  return { status: 'short', text: `Have ${availableText} · short by ${Number(shortage.toFixed(2))}${required.unit ? ` ${required.unit}` : ''}` }
+}
+
+function getRecipeIngredientRows(recipe, servings) {
+  return (recipe.ingredients || []).map(name => {
+    const detail = recipe.ingredientDetails && recipe.ingredientDetails[name]
+    const required = formatScaledQuantity(detail, servings, recipe.baseServings || 2)
+    const stock = compareStockWithRequirement(required, ingredientStock[name])
+    return { name, required, stock, present: ingredients.has(name) }
+  })
+}
 
 function getMealMatch(recipe) {
   const available = [...ingredients].map(item => item.toLowerCase())
@@ -1110,6 +1167,8 @@ function renderDailyMeals() {
     }
 
     const match = getMealMatch(recipe)
+    const servings = getMealServings(selectedDateKey, category)
+    const ingredientRows = getRecipeIngredientRows(recipe, servings)
     const missingText = match.missing.length
       ? `Still need: ${match.missing.join(', ')}`
       : 'You have all the listed ingredients!'
@@ -1126,9 +1185,10 @@ function renderDailyMeals() {
           <span>${Math.round(match.score * 100)}% ingredient match</span>
           <span class="meal-status ${isCooked ? 'is-cooked' : ''}">${statusText}</span>
         </div>
-        ${isPlanned ? `<label class="servings-control">Servings <input type="number" min="1" max="50" value="${getMealServings(selectedDateKey, category)}" data-servings="${category}" aria-label="Servings for ${category}"></label>` : ''}
+        <label class="servings-control">Servings <input type="number" min="1" max="50" value="${servings}" data-servings="${category}" aria-label="Servings for ${category}"></label>
         ${recipe.estimatedCost != null ? `<p class="meal-match-note">Approximate meal cost: KSh ${Number(recipe.estimatedCost).toLocaleString('en-KE')}${Number(householdProfile.dailyBudget) > 0 ? (Number(recipe.estimatedCost) <= Number(householdProfile.dailyBudget) / 3 ? ' · Within one-third of your daily budget target' : ' · Above one-third of your daily budget target') : ''}</p>` : ''}
         <p class="meal-match-note">${escapeHTML(isPlanned ? 'This meal is in your plan.' : missingText)}</p>
+        <details class="planner-ingredient-details"><summary>Ingredients for ${servings} servings</summary><ul class="planner-ingredient-list">${ingredientRows.map(row => `<li><span><strong>${escapeHTML(row.name)}</strong><small>Need: ${escapeHTML(row.required)}</small></span><small class="stock-status stock-${row.stock.status}">${escapeHTML(row.stock.text)}</small></li>`).join('')}</ul></details>
         <label class="plan-meal-picker">Your ${category.toLowerCase()} recipes
           <select data-plan-choice="${category}" aria-label="Choose ${category.toLowerCase()} recipe">
             ${recipes.filter(item => item.category === category).map(item => `<option value="${escapeHTML(item.id)}" ${item.id === recipe.id ? 'selected' : ''}>${escapeHTML(item.name)}</option>`).join('')}
@@ -1181,6 +1241,7 @@ dailyMeals.addEventListener('change', event => {
   saveData()
   renderShoppingList()
   renderHouseholdSummary()
+  renderDailyMeals()
   showToast(`Serving target updated to ${value}.`)
 })
 
@@ -1540,6 +1601,8 @@ function openRecipe(id) {
   if (!recipe) return
 
   const match = getMealMatch(recipe)
+  const defaultServings = Math.max(1, Number(householdProfile.adults || 1) + Number(householdProfile.children || 0))
+  let detailServings = defaultServings
   const isSaved = savedMeals.has(id)
   const isCooked = wasCookedToday(id, recipe.category)
   const hasInstructions = (recipe.instructions || []).length > 0
@@ -1554,14 +1617,10 @@ function openRecipe(id) {
     ${Number.isFinite(Number(recipe.estimatedCost)) ? `<p class="recipe-time">Approximate total meal cost: KSh ${Number(recipe.estimatedCost).toLocaleString('en-KE')}</p>` : ''}
     ${(recipe.caloriesPerServing != null || recipe.proteinPerServing != null) ? `<p class="recipe-time">Nutrition estimate per serving: ${recipe.caloriesPerServing != null ? `${Number(recipe.caloriesPerServing)} kcal` : 'Calories not entered'}${recipe.proteinPerServing != null ? ` · ${Number(recipe.proteinPerServing)} g protein` : ''}</p>` : ''}
     <h3>Ingredients</h3>
-    ${recipe.baseServings ? `<p class="ingredient-serving-note">Approximate quantities for ${Number(recipe.baseServings)} servings. Adjust to taste and appetite.</p>` : ''}
-    <ul class="recipe-ingredients">
-      ${(recipe.ingredients || []).map(item => `
-        <li class="${ingredients.has(item) ? 'ingredient-available' : ''}">
-          <span class="ingredient-name">${ingredients.has(item) ? '✓' : '○'} ${escapeHTML(item)}</span>
-          ${recipe.ingredientDetails && recipe.ingredientDetails[item] ? `<small class="ingredient-detail">${escapeHTML(recipe.ingredientDetails[item])}</small>` : ''}
-        </li>
-      `).join('')}
+    <label class="servings-control recipe-detail-servings">Servings <input id="recipe-detail-servings" type="number" min="1" max="50" value="${defaultServings}" aria-label="Recipe servings"></label>
+    <p class="ingredient-serving-note" id="recipe-serving-note">Approximate quantities for ${defaultServings} servings. Adjust to taste and appetite.</p>
+    <ul class="recipe-ingredients" id="recipe-detail-ingredients">
+      ${getRecipeIngredientRows(recipe, defaultServings).map(row => `<li class="${row.present ? 'ingredient-available' : ''}"><span class="ingredient-name">${row.present ? '✓' : '○'} ${escapeHTML(row.name)}</span><small class="ingredient-detail">Need: ${escapeHTML(row.required)}</small><small class="stock-status stock-${row.stock.status}">${escapeHTML(row.stock.text)}</small></li>`).join('')}
     </ul>
     ${hasInstructions ? `
       <h3>Let's cook</h3>
@@ -1600,6 +1659,18 @@ function openRecipe(id) {
   `
 
   modal.hidden = false
+
+  $('#recipe-detail-servings').addEventListener('change', event => {
+    const value = Number(event.target.value)
+    if (!Number.isInteger(value) || value < 1 || value > 50) {
+      event.target.value = detailServings
+      showToast('Servings must be between 1 and 50.')
+      return
+    }
+    detailServings = value
+    $('#recipe-serving-note').textContent = `Approximate quantities for ${value} servings. Adjust to taste and appetite.`
+    $('#recipe-detail-ingredients').innerHTML = getRecipeIngredientRows(recipe, value).map(row => `<li class="${row.present ? 'ingredient-available' : ''}"><span class="ingredient-name">${row.present ? '✓' : '○'} ${escapeHTML(row.name)}</span><small class="ingredient-detail">Need: ${escapeHTML(row.required)}</small><small class="stock-status stock-${row.stock.status}">${escapeHTML(row.stock.text)}</small></li>`).join('')
+  })
 
   if (hasInstructions) {
     let currentStep = 0
