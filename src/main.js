@@ -129,6 +129,8 @@ const starterRecipes = [
     emoji: '🥚',
     time: 15,
     ingredients: ['Eggs', 'Tea leaves', 'Sugar', 'Milk'],
+
+    ingredientDetails: {"Eggs":"4","Tea leaves":"2 teaspoons","Sugar":"2–4 teaspoons, to taste","Milk":"500 ml"},
     instructions: [
       'Put the eggs in a saucepan and cover with water.',
       'Boil until they reach your preferred firmness.',
@@ -144,6 +146,8 @@ const starterRecipes = [
     emoji: '🍠',
     time: 30,
     ingredients: ['Sweet potatoes', 'Tea leaves', 'Milk', 'Sugar'],
+
+    ingredientDetails: {"Sweet potatoes":"about 500 g, washed and peeled","Tea leaves":"2 teaspoons","Milk":"500 ml","Sugar":"2–4 teaspoons, to taste"},
     instructions: [
       'Wash and peel the sweet potatoes.',
       'Cut into manageable pieces.',
@@ -159,6 +163,8 @@ const starterRecipes = [
     emoji: '🥯',
     time: 45,
     ingredients: ['Wheat flour', 'Sugar', 'Milk', 'Cooking oil'],
+
+    ingredientDetails: {"Wheat flour":"2 cups","Sugar":"2 tablespoons","Milk":"about ¾ cup, added gradually","Cooking oil":"enough for deep-frying"},
     instructions: [
       'Mix flour and sugar in a bowl.',
       'Add milk gradually and knead into a soft dough.',
@@ -175,6 +181,8 @@ const starterRecipes = [
     emoji: '🍲',
     time: 60,
     ingredients: ['Maize', 'Beans', 'Onions', 'Tomatoes', 'Cooking oil', 'Salt'],
+
+    ingredientDetails: {"Maize":"½ cup, dried and soaked","Beans":"½ cup, dried and soaked","Onions":"1 medium, finely chopped","Tomatoes":"2 medium, diced","Cooking oil":"1 tablespoon","Salt":"½ teaspoon, or to taste"},
     instructions: [
       'Boil maize and beans until tender.',
       'Chop onions and tomatoes.',
@@ -192,6 +200,8 @@ const starterRecipes = [
     emoji: '🍚',
     time: 45,
     ingredients: ['Rice', 'Beans', 'Onions', 'Tomatoes', 'Cooking oil', 'Salt'],
+
+    ingredientDetails: {"Rice":"1 cup, rinsed","Beans":"½ cup, dried and soaked","Onions":"1 medium, chopped","Tomatoes":"2 medium, diced","Cooking oil":"1 tablespoon","Salt":"½ teaspoon, or to taste"},
     instructions: [
       'Boil beans until tender.',
       'Prepare rice separately.',
@@ -208,6 +218,8 @@ const starterRecipes = [
     emoji: '🥬',
     time: 35,
     ingredients: ['Maize flour', 'Sukuma wiki', 'Onions', 'Tomatoes', 'Cooking oil', 'Salt'],
+
+    ingredientDetails: {"Maize flour":"about 1 cup, adjust to preferred firmness","Sukuma wiki":"1 medium bunch (about 250 g), washed and sliced","Onions":"1 small, chopped","Tomatoes":"1 medium, diced","Cooking oil":"1 tablespoon","Salt":"¼ teaspoon, or to taste"},
     instructions: [
       'Wash and chop the sukuma wiki.',
       'Fry onions, add tomatoes and cook until soft.',
@@ -225,6 +237,8 @@ const starterRecipes = [
     emoji: '🍲',
     time: 30,
     ingredients: ['Potatoes', 'Eggs', 'Tomatoes', 'Onions', 'Cooking oil', 'Salt'],
+
+    ingredientDetails: {"Potatoes":"about 500 g, peeled and cubed","Eggs":"2, hard-boiled and peeled","Tomatoes":"2 medium, diced","Onions":"1 medium, chopped","Cooking oil":"1 tablespoon","Salt":"½ teaspoon, or to taste"},
     instructions: [
       'Peel and cut the potatoes into pieces.',
       'Boil the potatoes until almost tender.',
@@ -242,6 +256,8 @@ const starterRecipes = [
     emoji: '🥘',
     time: 30,
     ingredients: ['Rice', 'Cabbage', 'Onions', 'Tomatoes', 'Cooking oil', 'Salt'],
+
+    ingredientDetails: {"Rice":"1 cup, rinsed","Cabbage":"about 2 cups shredded (150–200 g)","Onions":"1 small, sliced","Tomatoes":"1 medium, diced","Cooking oil":"1 tablespoon","Salt":"½ teaspoon, or to taste"},
     instructions: [
       'Wash and cook the rice.',
       'Slice the cabbage, onions and tomatoes.',
@@ -1519,6 +1535,7 @@ function openRecipe(id) {
     ${Number.isFinite(Number(recipe.estimatedCost)) ? `<p class="recipe-time">Approximate total meal cost: KSh ${Number(recipe.estimatedCost).toLocaleString('en-KE')}</p>` : ''}
     ${(recipe.caloriesPerServing != null || recipe.proteinPerServing != null) ? `<p class="recipe-time">Nutrition estimate per serving: ${recipe.caloriesPerServing != null ? `${Number(recipe.caloriesPerServing)} kcal` : 'Calories not entered'}${recipe.proteinPerServing != null ? ` · ${Number(recipe.proteinPerServing)} g protein` : ''}</p>` : ''}
     <h3>Ingredients</h3>
+    <p class="ingredient-serving-note">Approximate quantities for 2 servings. Adjust to taste and appetite.</p>
     <ul class="recipe-ingredients">
       ${(recipe.ingredients || []).map(item => `
         <li class="${ingredients.has(item) ? 'ingredient-available' : ''}">
