@@ -469,13 +469,21 @@ app.innerHTML = `
         </section>
         <section class="suggestion-section">
           <div class="day-tracker">
-            <div class="week-controls">
-              <button type="button" id="previous-week" class="week-arrow" aria-label="Previous week">‹</button>
-              <strong id="week-label">This week</strong>
-              <button type="button" id="next-week" class="week-arrow" aria-label="Next week">›</button>
-              <button type="button" id="go-today" class="today-button">Today</button>
+            <div class="calendar-toolbar">
+              <div class="calendar-month-title"><span class="eyebrow">MEAL CALENDAR</span><strong id="week-label">November 2026</strong></div>
+              <div class="calendar-navigation">
+                <button type="button" id="previous-week" class="week-arrow" aria-label="Previous month">‹</button>
+                <button type="button" id="next-week" class="week-arrow" aria-label="Next month">›</button>
+                <button type="button" id="go-today" class="today-button">Today</button>
+              </div>
             </div>
-            <div id="week-days" class="week-days" aria-label="Choose a day"></div>
+            <div class="month-calendar" aria-label="Choose a day">
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+              <div id="week-days" class="week-days"></div>
+            </div>
+            <div class="calendar-legend"><span><i class="planned-dot"></i> Planned</span><span><i class="cooked-dot"></i> Cooked</span></div>
             <div class="selected-day-heading">
               <div><span class="eyebrow">SELECTED DAY</span><h3 id="selected-day-label">Today</h3></div>
               <span id="day-progress" class="day-progress">0 of 3 cooked</span>
@@ -956,19 +964,20 @@ function getBestMeal(category) {
 
 function renderDateTracker() {
   const selectedDate = dateFromKey(selectedDateKey)
-  const weekStart = startOfWeek(selectedDate)
-  const weekEnd = addDays(weekStart, 6)
-  const weekLabel = `${weekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${weekEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
-  $('#week-label').textContent = weekLabel
+  const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+  const gridStart = startOfWeek(monthStart)
+  const monthLabel = selectedDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  $('#week-label').textContent = monthLabel
   $('#selected-day-label').textContent = selectedDateKey === todayKey()
     ? `Today · ${formatDate(selectedDate)}`
     : selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   const weekDays = $('#week-days')
-  weekDays.innerHTML = ''
-  for (let offset = 0; offset < 7; offset++) {
-    const date = addDays(weekStart, offset)
+  weekDays.replaceChildren()
+  for (let offset = 0; offset < 42; offset++) {
+    const date = addDays(gridStart, offset)
     const key = todayKey(date)
+    const inMonth = date.getMonth() === selectedDate.getMonth()
     const plans = mealPlans[key] || {}
     const plannedCount = ['Breakfast', 'Lunch', 'Supper'].filter(category => plans[category]).length
     const cookedCount = ['Breakfast', 'Lunch', 'Supper'].filter(category =>
@@ -976,12 +985,12 @@ function renderDateTracker() {
     ).length
     const button = document.createElement('button')
     button.type = 'button'
-    button.className = `week-day${key === selectedDateKey ? ' selected' : ''}${key === todayKey() ? ' is-today' : ''}`
+    button.className = `week-day${key === selectedDateKey ? ' selected' : ''}${key === todayKey() ? ' is-today' : ''}${inMonth ? '' : ' outside-month'}`
     button.dataset.date = key
     button.setAttribute('aria-pressed', String(key === selectedDateKey))
+    button.setAttribute('aria-label', date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + (plannedCount ? `, ${plannedCount} planned meals` : '') + (cookedCount ? `, ${cookedCount} cooked meals` : ''))
     button.innerHTML = `
-      <span>${date.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
-      <strong>${date.getDate()}</strong>
+      <span class="calendar-date-number">${date.getDate()}</span>
       <span class="day-dots">${plannedCount ? '<i class="planned-dot"></i>' : ''}${cookedCount ? '<i class="cooked-dot"></i>' : ''}</span>
     `
     weekDays.appendChild(button)
@@ -1003,13 +1012,16 @@ $('#week-days').addEventListener('click', event => {
 })
 
 $('#previous-week').addEventListener('click', () => {
-  selectedDateKey = todayKey(addDays(dateFromKey(selectedDateKey), -7))
+  const selected = dateFromKey(selectedDateKey)
+  selectedDateKey = todayKey(new Date(selected.getFullYear(), selected.getMonth() - 1, Math.min(selected.getDate(), new Date(selected.getFullYear(), selected.getMonth(), 0).getDate())))
   renderDateTracker()
   renderDailyMeals()
 })
 
 $('#next-week').addEventListener('click', () => {
-  selectedDateKey = todayKey(addDays(dateFromKey(selectedDateKey), 7))
+  const selected = dateFromKey(selectedDateKey)
+  const lastDay = new Date(selected.getFullYear(), selected.getMonth() + 2, 0).getDate()
+  selectedDateKey = todayKey(new Date(selected.getFullYear(), selected.getMonth() + 1, Math.min(selected.getDate(), lastDay)))
   renderDateTracker()
   renderDailyMeals()
 })
