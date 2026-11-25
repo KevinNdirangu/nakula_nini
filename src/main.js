@@ -36,6 +36,7 @@ const mealPlans = stored.mealPlans && typeof stored.mealPlans === 'object'
   : { [todayDateKey]: { Breakfast: null, Lunch: null, Supper: null, ...(stored.mealPlan || {}) } }
 
 let selectedDateKey = todayDateKey
+let openPlanChooserCategory = null
 
 const cookingHistory = Array.isArray(stored.cookingHistory)
   ? stored.cookingHistory
@@ -1061,9 +1062,17 @@ function renderDailyMeals() {
         ${isPlanned ? `<label class="servings-control">Servings <input type="number" min="1" max="50" value="${getMealServings(selectedDateKey, category)}" data-servings="${category}" aria-label="Servings for ${category}"></label>` : ''}
         ${recipe.estimatedCost != null ? `<p class="meal-match-note">Approximate meal cost: KSh ${Number(recipe.estimatedCost).toLocaleString('en-KE')}${Number(householdProfile.dailyBudget) > 0 ? (Number(recipe.estimatedCost) <= Number(householdProfile.dailyBudget) / 3 ? ' · Within one-third of your daily budget target' : ' · Above one-third of your daily budget target') : ''}</p>` : ''}
         <p class="meal-match-note">${escapeHTML(isPlanned ? 'This meal is in your plan.' : missingText)}</p>
+        ${openPlanChooserCategory === category ? `
+          <label class="plan-meal-picker">Choose a ${category.toLowerCase()} meal
+            <select data-plan-choice="${category}">
+              ${recipes.filter(item => item.category === category).map(item => `<option value="${escapeHTML(item.id)}" ${item.id === recipe.id ? 'selected' : ''}>${escapeHTML(item.name)}</option>`).join('')}
+            </select>
+          </label>
+        ` : ''}
         <div class="meal-actions">
           <button type="button" class="secondary-button" data-action="view" data-id="${escapeHTML(recipe.id)}">View meal</button>
-          <button type="button" class="secondary-button" data-action="plan" data-category="${category}" data-id="${escapeHTML(recipe.id)}">${isPlanned ? 'Change plan' : 'Plan this'}</button>
+          <button type="button" class="secondary-button" data-action="choose" data-category="${category}">${openPlanChooserCategory === category ? 'Close choices' : (isPlanned ? 'Change meal' : 'Choose meal')}</button>
+          ${isPlanned ? `<button type="button" class="text-button danger-text" data-action="clear-plan" data-category="${category}">Remove plan</button>` : ''}
           <button type="button" class="small-primary-button" data-action="cooked" data-category="${category}" data-id="${escapeHTML(recipe.id)}" ${isFutureDate ? 'disabled title="You cannot mark a future meal as cooked."' : ''}>${isCooked ? 'Undo cooked' : 'Cooked ✓'}</button>
         </div>
       </div>
@@ -1080,6 +1089,22 @@ function getMealServings(dateKey, category) {
 }
 
 dailyMeals.addEventListener('change', event => {
+  const choice = event.target.closest('[data-plan-choice]')
+  if (choice) {
+    const category = choice.dataset.planChoice
+    const recipe = findRecipe(choice.value)
+    if (!recipe || recipe.category !== category) return
+    getPlansForDate(selectedDateKey)[category] = recipe.id
+    const servingsKey = `${selectedDateKey}:${category}`
+    if (!mealServings[servingsKey]) mealServings[servingsKey] = Math.max(1, Number(householdProfile.adults || 1) + Number(householdProfile.children || 0))
+    openPlanChooserCategory = null
+    saveData()
+    renderDateTracker()
+    renderDailyMeals()
+    showToast(`${recipe.name} planned for ${category.toLowerCase()}.`)
+    return
+  }
+
   const input = event.target.closest('[data-servings]')
   if (!input) return
   const value = Number(input.value)
@@ -1102,16 +1127,19 @@ dailyMeals.addEventListener('click', event => {
   const { action, id, category } = button.dataset
   if (action === 'view') openRecipe(id)
 
-  if (action === 'plan') {
-    const recipe = findRecipe(id)
-    if (!recipe) return
-    getPlansForDate(selectedDateKey)[category] = id
-    const servingsKey = `${selectedDateKey}:${category}`
-    if (!mealServings[servingsKey]) mealServings[servingsKey] = Math.max(1, Number(householdProfile.adults || 1) + Number(householdProfile.children || 0))
+  if (action === 'choose') {
+    openPlanChooserCategory = openPlanChooserCategory === category ? null : category
+    renderDailyMeals()
+  }
+
+  if (action === 'clear-plan') {
+    getPlansForDate(selectedDateKey)[category] = null
+    delete mealServings[`${selectedDateKey}:${category}`]
+    openPlanChooserCategory = null
     saveData()
     renderDateTracker()
     renderDailyMeals()
-    showToast(`${recipe.name} planned for ${category.toLowerCase()}.`)
+    showToast(`${category} plan removed.`)
   }
 
   if (action === 'cooked') recordMeal(id, category, selectedDateKey)
