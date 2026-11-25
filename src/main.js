@@ -1000,7 +1000,7 @@ ingredientForm.addEventListener('submit', event => {
 function parseQuantityDetail(detail) {
   if (!detail) return null
   const source = String(detail).toLowerCase().replace(/,/g, ' ').trim()
-  const match = source.match(/^(?:about\s+|approximately\s+|~\s*)?([0-9]+(?:\.[0-9]+)?|[½¼¾⅓⅔⅛])(?:\s*[-–to]+\s*([0-9]+(?:\.[0-9]+)?|[½¼¾⅓⅔⅛]))?\s*(.*)$/i)
+  const match = source.match(/^(?:about\s+|approximately\s+|~\s*)?([0-9]+(?:\.[0-9]+)?|[½¼¾⅓⅔⅛])(?:\s*(?:[-–]|to)\s*([0-9]+(?:\.[0-9]+)?|[½¼¾⅓⅔⅛]))?\s*(.*)$/i)
   if (!match) return null
   const fractions = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1/3, '⅔': 2/3, '⅛': 0.125 }
   const number = value => fractions[value] ?? Number(value)
