@@ -1192,3 +1192,74 @@ main { display: block; }
 @media (prefers-color-scheme: dark) {
   .recipe-filter.active { color: #1C1C1B; }
 }
+
+
+/* Step-by-step cooking guide */
+.cooking-guide {
+  margin: 12px 0 18px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+.cooking-guide-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.cooking-progress-track {
+  height: 7px;
+  margin: 11px 0 17px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--border);
+}
+.cooking-progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width 180ms ease;
+}
+.cooking-current-step {
+  min-height: 112px;
+  padding: 17px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+.cooking-step-kicker {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+.cooking-current-step p {
+  margin: 10px 0 0;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.75;
+}
+.cooking-step-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+.cooking-step-controls button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.cooking-finish-note {
+  margin: 12px 0 0;
+  color: var(--green) !important;
+  font-weight: 700;
+}
+@media (max-width: 520px) {
+  .cooking-guide { padding: 12px; }
+  .cooking-current-step { min-height: 126px; padding: 14px; }
+  .cooking-current-step p { font-size: 14px; }
+}
