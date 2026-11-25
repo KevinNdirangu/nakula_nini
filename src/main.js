@@ -1482,6 +1482,7 @@ function openRecipe(id) {
   const isSaved = savedMeals.has(id)
   const isCooked = wasCookedToday(id, recipe.category)
   const hasInstructions = (recipe.instructions || []).length > 0
+  const steps = recipe.instructions || []
 
   modalContent.innerHTML = `
     <span class="meal-tag">${escapeHTML(recipe.category.toUpperCase())}</span>
@@ -1500,10 +1501,25 @@ function openRecipe(id) {
       `).join('')}
     </ul>
     ${hasInstructions ? `
-      <h3>How to prepare</h3>
-      <ol class="recipe-steps">
-        ${recipe.instructions.map(step => `<li>${escapeHTML(step)}</li>`).join('')}
-      </ol>
+      <h3>Let's cook</h3>
+      <section class="cooking-guide" aria-label="Step-by-step cooking guide">
+        <div class="cooking-guide-top">
+          <span id="cooking-step-count">Step 1 of ${steps.length}</span>
+          <span id="cooking-progress-label">0% complete</span>
+        </div>
+        <div class="cooking-progress-track" role="progressbar" aria-label="Cooking guide progress" aria-valuemin="0" aria-valuemax="${steps.length}" aria-valuenow="0" id="cooking-progress">
+          <span id="cooking-progress-fill"></span>
+        </div>
+        <div class="cooking-current-step" id="cooking-step-panel" aria-live="polite">
+          <span class="cooking-step-kicker">STEP 1</span>
+          <p>${escapeHTML(steps[0])}</p>
+        </div>
+        <div class="cooking-step-controls">
+          <button type="button" class="secondary-button" id="cooking-previous" disabled>← Previous</button>
+          <button type="button" class="small-primary-button" id="cooking-next">${steps.length === 1 ? 'Finish guide ✓' : 'Next step →'}</button>
+        </div>
+        <p class="cooking-finish-note" id="cooking-finish-note" hidden>That's the final step. Your meal is ready — enjoy! 🍽️</p>
+      </section>
     ` : `
       <p class="quick-meal-note">This is a quick meal entry. No preparation instructions have been added.</p>
     `}
@@ -1521,6 +1537,53 @@ function openRecipe(id) {
   `
 
   modal.hidden = false
+
+  if (hasInstructions) {
+    let currentStep = 0
+    const previousButton = $('#cooking-previous')
+    const nextButton = $('#cooking-next')
+    const stepPanel = $('#cooking-step-panel')
+    const stepCount = $('#cooking-step-count')
+    const progress = $('#cooking-progress')
+    const progressFill = $('#cooking-progress-fill')
+    const progressLabel = $('#cooking-progress-label')
+    const finishNote = $('#cooking-finish-note')
+
+    const renderCookingStep = () => {
+      const finished = currentStep === steps.length
+      if (finished) {
+        stepCount.textContent = 'Guide complete'
+        progress.setAttribute('aria-valuenow', String(steps.length))
+        progressFill.style.width = '100%'
+        progressLabel.textContent = '100% complete'
+        stepPanel.innerHTML = '<span class="cooking-step-kicker">ALL DONE</span><p>You've reached the end of the preparation guide.</p>'
+        finishNote.hidden = false
+        previousButton.disabled = false
+        nextButton.textContent = 'Start again ↺'
+        return
+      }
+
+      const percent = Math.round(((currentStep + 1) / steps.length) * 100)
+      stepCount.textContent = `Step ${currentStep + 1} of ${steps.length}`
+      progress.setAttribute('aria-valuenow', String(currentStep + 1))
+      progressFill.style.width = `${percent}%`
+      progressLabel.textContent = `${percent}% through`
+      stepPanel.innerHTML = `<span class="cooking-step-kicker">STEP ${currentStep + 1}</span><p>${escapeHTML(steps[currentStep])}</p>`
+      finishNote.hidden = true
+      previousButton.disabled = currentStep === 0
+      nextButton.textContent = currentStep === steps.length - 1 ? 'Finish guide ✓' : 'Next step →'
+    }
+
+    previousButton.addEventListener('click', () => {
+      if (currentStep > 0) currentStep--
+      renderCookingStep()
+    })
+
+    nextButton.addEventListener('click', () => {
+      currentStep = currentStep >= steps.length ? 0 : currentStep + 1
+      renderCookingStep()
+    })
+  }
 
   $('#save-recipe').addEventListener('click', () => {
     if (savedMeals.has(id)) {
@@ -1540,7 +1603,6 @@ function openRecipe(id) {
     recordMeal(id, recipe.category)
   })
 }
-
 $('#modal-close').addEventListener('click', () => {
   modal.hidden = true
 })
