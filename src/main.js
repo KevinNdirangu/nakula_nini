@@ -123,6 +123,7 @@ customIngredients.forEach(name => {
 const starterRecipes = [
   {
     id: 'boiled-eggs',
+    baseServings: 2,
     name: 'Boiled eggs and tea',
     category: 'Breakfast',
     description: 'A simple breakfast to start the day.',
@@ -140,6 +141,7 @@ const starterRecipes = [
   },
   {
     id: 'sweet-potatoes',
+    baseServings: 2,
     name: 'Viazi vitamu na chai',
     category: 'Breakfast',
     description: 'Sweet potatoes served with a warm cup of tea.',
@@ -157,6 +159,7 @@ const starterRecipes = [
   },
   {
     id: 'mandazi',
+    baseServings: 2,
     name: 'Mandazi',
     category: 'Breakfast',
     description: 'Soft homemade mandazi for a relaxed morning.',
@@ -175,6 +178,7 @@ const starterRecipes = [
   },
   {
     id: 'githeri',
+    baseServings: 2,
     name: 'Githeri',
     category: 'Lunch',
     description: 'A Kenyan favourite made with maize and beans.',
@@ -194,6 +198,7 @@ const starterRecipes = [
   },
   {
     id: 'rice-beans',
+    baseServings: 2,
     name: 'Rice na beans',
     category: 'Lunch',
     description: 'A filling combination of rice and beans.',
@@ -212,6 +217,7 @@ const starterRecipes = [
   },
   {
     id: 'ugali-sukuma',
+    baseServings: 2,
     name: 'Ugali na sukuma wiki',
     category: 'Supper',
     description: 'A familiar Kenyan supper.',
@@ -231,6 +237,7 @@ const starterRecipes = [
   },
   {
     id: 'viazi-mayai',
+    baseServings: 2,
     name: 'Viazi vya mchuzi na mayai',
     category: 'Supper',
     description: 'Potatoes and eggs in a rich tomato-onion sauce.',
@@ -250,6 +257,7 @@ const starterRecipes = [
   },
   {
     id: 'cabbage-rice',
+    baseServings: 2,
     name: 'Rice na cabbage',
     category: 'Supper',
     description: 'Rice served with lightly cooked cabbage.',
@@ -1535,7 +1543,7 @@ function openRecipe(id) {
     ${Number.isFinite(Number(recipe.estimatedCost)) ? `<p class="recipe-time">Approximate total meal cost: KSh ${Number(recipe.estimatedCost).toLocaleString('en-KE')}</p>` : ''}
     ${(recipe.caloriesPerServing != null || recipe.proteinPerServing != null) ? `<p class="recipe-time">Nutrition estimate per serving: ${recipe.caloriesPerServing != null ? `${Number(recipe.caloriesPerServing)} kcal` : 'Calories not entered'}${recipe.proteinPerServing != null ? ` · ${Number(recipe.proteinPerServing)} g protein` : ''}</p>` : ''}
     <h3>Ingredients</h3>
-    <p class="ingredient-serving-note">Approximate quantities for 2 servings. Adjust to taste and appetite.</p>
+    ${recipe.baseServings ? `<p class="ingredient-serving-note">Approximate quantities for ${Number(recipe.baseServings)} servings. Adjust to taste and appetite.</p>` : ''}
     <ul class="recipe-ingredients">
       ${(recipe.ingredients || []).map(item => `
         <li class="${ingredients.has(item) ? 'ingredient-available' : ''}">
