@@ -1945,7 +1945,8 @@ function showMatheMessage() {
 
   let previousIndex = -1
   try {
-    previousIndex = Number(localStorage.getItem("kwaMatheLastMessage"))
+    const savedIndex = localStorage.getItem("kwaMatheLastMessage")
+    if (savedIndex !== null) previousIndex = Number(savedIndex)
   } catch (error) {
     previousIndex = -1
   }
