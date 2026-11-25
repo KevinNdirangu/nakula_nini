@@ -1263,3 +1263,16 @@ main { display: block; }
   .cooking-current-step { min-height: 126px; padding: 14px; }
   .cooking-current-step p { font-size: 14px; }
 }
+
+
+/* Ingredient quantities and preparation notes */
+.recipe-ingredients li { margin: 9px 0; }
+.ingredient-name { display: block; }
+.ingredient-detail {
+  display: block;
+  margin: 2px 0 0 23px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
