@@ -1284,3 +1284,64 @@ main { display: block; }
   font-size: 12px;
   line-height: 1.5;
 }
+
+
+/* Kitchen stock quantities and recipe planning */
+.inventory-chip {
+  flex-wrap: wrap;
+  border-radius: 14px;
+  padding: 8px 9px 8px 12px;
+}
+.inventory-chip-name { font-weight: 750; }
+.inventory-quantity-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.inventory-quantity-label input {
+  width: 86px;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+}
+.planner-ingredient-details {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+.planner-ingredient-details summary {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.planner-ingredient-list { display: grid; gap: 9px; margin: 12px 0 2px; padding: 0; list-style: none; }
+.planner-ingredient-list li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-top: 8px; border-top: 1px solid var(--border); }
+.planner-ingredient-list li > span { display: grid; gap: 3px; min-width: 0; }
+.planner-ingredient-list strong { color: var(--text); font-size: 12px; }
+.planner-ingredient-list small, .recipe-ingredients .stock-status { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.stock-status { display: block; text-align: right; }
+.stock-enough { color: var(--green) !important; font-weight: 750; }
+.stock-short { color: var(--danger, #b34b3d) !important; font-weight: 750; }
+.stock-recorded { color: var(--muted) !important; }
+.stock-not-entered { color: var(--muted) !important; font-style: italic; }
+.recipe-detail-servings { max-width: 190px; margin: 10px 0; }
+.recipe-ingredients .ingredient-detail { display: block; margin-top: 3px; }
+.recipe-ingredients .stock-status { margin-top: 2px; text-align: left; }
+@media (max-width: 480px) {
+  .inventory-chip { width: 100%; justify-content: space-between; }
+  .inventory-quantity-label { margin-left: auto; }
+  .inventory-quantity-label input { width: 78px; }
+  .planner-ingredient-list li { gap: 7px; }
+  .planner-ingredient-list li > .stock-status { max-width: 48%; }
+}
