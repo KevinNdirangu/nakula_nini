@@ -267,7 +267,7 @@ app.innerHTML = `
         <span class="brand-mark">K</span>
         <span>kwa mathe<span class="brand-dot">.</span></span>
       </a>
-      <button class="profile-button" type="button" aria-label="Mathe mascot">
+      <button class="profile-button" type="button" data-go="Settings" aria-label="Open settings">
         <svg viewBox="0 0 64 64" role="img" aria-label="Illustrated Mathe">
           <path d="M10 58c1-13 9-20 22-20s21 7 22 20" fill="#C66A43"/>
           <path d="M14 25C12 9 23 3 33 5c13 1 19 12 16 24l-5 13H19z" fill="#244B38"/>
@@ -310,48 +310,15 @@ app.innerHTML = `
 
         <section class="suggestion-section">
           <div class="section-heading">
-            <div>
-              <p class="eyebrow">TODAY'S PLAN</p>
-              <h2>What's cooking today?</h2>
-            </div>
+            <div><p class="eyebrow">LET'S GET COOKING</p><h2>What's in your kitchen?</h2></div>
             <span class="magic-icon">✦</span>
           </div>
-          <p class="section-description">
-            Plan your meals, keep track of what you cook, and look back at previous days.
-          </p>
-          <div class="day-tracker">
-            <div class="week-controls">
-              <button type="button" id="previous-week" class="week-arrow" aria-label="Previous week">‹</button>
-              <strong id="week-label">This week</strong>
-              <button type="button" id="next-week" class="week-arrow" aria-label="Next week">›</button>
-              <button type="button" id="go-today" class="today-button">Today</button>
-            </div>
-            <div id="week-days" class="week-days" aria-label="Choose a day"></div>
-            <div class="selected-day-heading">
-              <div><span class="eyebrow">SELECTED DAY</span><h3 id="selected-day-label">Today</h3></div>
-              <span id="day-progress" class="day-progress">0 of 3 cooked</span>
-            </div>
+          <p class="section-description">Check what you have and let Mathe help you decide what to make.</p>
+          <button class="primary-button" type="button" data-go="My Kitchen">Open My Kitchen <span>→</span></button>
+          <div class="home-shortcuts">
+            <button class="shortcut-card" type="button" data-go="Planner"><span>📅</span><strong>Plan meals</strong><small>Organise your week</small></button>
+            <button class="shortcut-card" type="button" data-go="Recipes"><span>🍲</span><strong>Explore recipes</strong><small>Find something delicious</small></button>
           </div>
-          <div id="daily-meals" class="daily-meals"></div>
-
-          <section class="planning-tools">
-            <div class="section-heading"><div><p class="eyebrow">PLAN SMARTER</p><h2>Household & budget</h2></div></div>
-            <p class="section-description">Set your household size and daily food budget. You can adjust servings for each planned meal.</p>
-            <form id="household-form" class="household-form">
-              <label>Adults<input id="household-adults" type="number" min="1" max="30" value="1" required></label>
-              <label>Children<input id="household-children" type="number" min="0" max="30" value="0" required></label>
-              <label>Daily budget (KSh)<input id="daily-budget" type="number" min="0" max="1000000" step="10" placeholder="Optional"></label>
-              <button class="small-primary-button" type="submit">Save household</button>
-            </form>
-            <p class="planning-hint" id="household-summary"></p>
-          </section>
-
-          <section class="shopping-section">
-            <div class="section-heading"><div><p class="eyebrow">YOUR WEEK AT A GLANCE</p><h2>Shopping list</h2></div><button type="button" class="secondary-button" id="refresh-shopping">Refresh</button></div>
-            <p class="section-description">Missing ingredients from meals planned in the selected week. Shared ingredients are combined to help reduce waste.</p>
-            <div id="shopping-list" class="shopping-list"></div>
-            <p class="planning-hint">Ingredient quantities are not yet calculated because the current recipe collection does not consistently store measured quantities.</p>
-          </section>
         </section>
 
         <section class="daily-tip">
@@ -484,6 +451,49 @@ app.innerHTML = `
         <div id="recipe-list" class="recipe-list"></div>
       </section>
 
+      <section class="page" id="page-planner" hidden>
+        <section class="page-heading">
+          <p class="eyebrow">YOUR MEAL PLAN</p>
+          <h1>Planner</h1>
+          <p class="welcome-copy">Plan what you'd like to eat. Meals are only added to your cooking history when you mark them as cooked.</p>
+        </section>
+        <section class="suggestion-section">
+          <div class="day-tracker">
+            <div class="week-controls">
+              <button type="button" id="previous-week" class="week-arrow" aria-label="Previous week">‹</button>
+              <strong id="week-label">This week</strong>
+              <button type="button" id="next-week" class="week-arrow" aria-label="Next week">›</button>
+              <button type="button" id="go-today" class="today-button">Today</button>
+            </div>
+            <div id="week-days" class="week-days" aria-label="Choose a day"></div>
+            <div class="selected-day-heading">
+              <div><span class="eyebrow">SELECTED DAY</span><h3 id="selected-day-label">Today</h3></div>
+              <span id="day-progress" class="day-progress">0 of 3 cooked</span>
+            </div>
+          </div>
+          <div id="daily-meals" class="daily-meals"></div>
+        </section>
+      </section>
+
+      <section class="page" id="page-settings" hidden>
+        <section class="page-heading">
+          <p class="eyebrow">YOUR HOME PROFILE</p>
+          <h1>Settings</h1>
+          <p class="welcome-copy">Tell Mathe who you're cooking for and your usual food budget.</p>
+        </section>
+        <section class="planning-tools">
+          <div class="section-heading"><div><p class="eyebrow">HOUSEHOLD</p><h2>Who are we cooking for?</h2></div></div>
+          <p class="section-description">These details help Mathe suggest suitable serving sizes and meal costs.</p>
+          <form id="household-form" class="household-form">
+            <label>Adults<input id="household-adults" type="number" min="1" max="30" value="1" required></label>
+            <label>Children<input id="household-children" type="number" min="0" max="30" value="0" required></label>
+            <label>Daily budget (KSh)<input id="daily-budget" type="number" min="0" max="1000000" step="10" placeholder="Optional"></label>
+            <button class="small-primary-button" type="submit">Save settings</button>
+          </form>
+          <p class="planning-hint" id="household-summary"></p>
+        </section>
+      </section>
+
       <section class="page" id="page-saved" hidden>
         <section class="page-heading">
           <p class="eyebrow">YOUR FOOD MEMORIES</p>
@@ -516,18 +526,11 @@ app.innerHTML = `
     </main>
 
     <nav class="bottom-nav" aria-label="Main navigation">
-      <button class="nav-item active" type="button" data-page="Home">
-        <span>⌂</span><small>Home</small>
-      </button>
-      <button class="nav-item" type="button" data-page="My Kitchen">
-        <span>♧</span><small>My Kitchen</small>
-      </button>
-      <button class="nav-item" type="button" data-page="Recipes">
-        <span>▤</span><small>Recipes</small>
-      </button>
-      <button class="nav-item" type="button" data-page="Saved">
-        <span>♡</span><small>Saved</small>
-      </button>
+      <button class="nav-item active" type="button" data-page="Home"><span>⌂</span><small>Home</small></button>
+      <button class="nav-item" type="button" data-page="My Kitchen"><span>♧</span><small>Kitchen</small></button>
+      <button class="nav-item" type="button" data-page="Planner"><span>▦</span><small>Planner</small></button>
+      <button class="nav-item" type="button" data-page="Recipes"><span>▤</span><small>Recipes</small></button>
+      <button class="nav-item" type="button" data-page="Saved"><span>♡</span><small>Saved</small></button>
     </nav>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1417,6 +1420,8 @@ savedList.addEventListener('click', event => {
 const pageMap = {
   Home: '#page-home',
   'My Kitchen': '#page-kitchen',
+  Planner: '#page-planner',
+  Settings: '#page-settings',
   Recipes: '#page-recipes',
   Saved: '#page-saved'
 }
@@ -1439,6 +1444,8 @@ function navigateTo(page) {
   })
 
   if (page === 'My Kitchen') renderIngredients()
+  if (page === 'Planner') { renderDateTracker(); renderDailyMeals() }
+  if (page === 'Settings') renderHouseholdSummary()
   if (page === 'Recipes') renderRecipes()
   if (page === 'Saved') renderHistory()
 
